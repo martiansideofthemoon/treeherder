@@ -409,23 +409,11 @@ INSTALLED_APPS += LOCAL_APPS
 TEMPLATE_DEBUG = DEBUG
 
 # The database config is defined using environment variables of form:
-#   'mysql://username:password@host:optional_port/database_name'
+#   'mysql://username:password@host:optional_port/database_name?ssl=...'
 DATABASES = {
     'default': env.db_url('DATABASE_URL'),
     'read_only': env.db_url('DATABASE_URL_RO')
 }
-
-# Setup ssl connection for aws rds.
-# Now that we're using django-environ this can be removed after
-# the Heroku env variables are updated with += `?ssl=...`.
-if env.bool('IS_HEROKU', default=False):
-    ca_path = '/app/deployment/aws/combined-ca-bundle.pem'
-    for db_name in DATABASES:
-        DATABASES[db_name]['OPTIONS'] = {
-            'ssl': {
-                'ca': ca_path
-            }
-        }
 
 # TREEHERDER_MEMCACHED is a string of comma-separated address:port pairs
 MEMCACHED_LOCATION = TREEHERDER_MEMCACHED.strip(',').split(',')
