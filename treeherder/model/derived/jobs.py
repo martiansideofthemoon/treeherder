@@ -485,7 +485,9 @@ class JobsModel(TreeherderModelBase):
         if not settings.AUTOCLASSIFY_JOBS:
             return
 
-        if self.fully_autoclassified(job_id) and len(self.get_job_note_list(job_id)) == 0:
+        if self.fully_autoclassified(job_id):
+            if user == "autoclassifier" and len(self.get_job_note_list(job_id)) != 0:
+                return
             self.insert_autoclassify_job_note(job_id, user=user)
 
     def fully_autoclassified(self, job_id):
