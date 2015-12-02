@@ -59,7 +59,7 @@
           ng-if="!line.best_is_verified">
         <!--classification options for line-->
         <li ng-repeat="option in line.ui.options" >
-          <span class="classification-options">
+          <div class="classification-options">
             <span ng-if="option.icon_type == 'autoclassified'"
                   class="glyphicon glyphicon-star-empty best-classification-star"
                   title="This is the option Treeherder chose as the best"></span>
@@ -79,14 +79,21 @@
                  target="_blank">Bug {{::option.bug_number}} - <span ng-bind-html="option.bug_summary | escapeHTML"></span>
               </a>
             </span>
-              <span ng-if="!option.bug_number">
-                <input class="manual-bug-input"
-                       type="text"
-                       placeholder="Enter a bug number"
-                       title="This 'best match' does not yet have a bug number.  Please enter one."
-                       ng-model="manualBugs[line.id]"/>
-              </span>
-          </span>
+            <span ng-if="!option.bug_number">
+              <input class="manual-bug-input"
+                     type="text"
+                     placeholder="Enter a bug number"
+                     title="This 'best match' does not yet have a bug number.  Please enter one."
+                     ng-model="manualBugs[line.id]"/>
+            </span>
+          </div>
+          <div class="classification-matchers" ng-if="option.type == 'classified_failure'">
+            Matched by:
+            <span ng-repeat='match in option.matches'>
+              {{match.matcher.name}} ({{match.score}})
+            </span>
+            <a target="th_similar" ng-href="/api/classified-failure/{{option.id}}/matches">Othermatching failures...</a>
+          </div>
         </li>
       </ul>
     </li>

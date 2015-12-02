@@ -526,6 +526,13 @@ div.talos-panel {
   width: 21px;
 }
 
+/* TODO: Make this better */
+.classification-matchers {
+  color: grey;
+  font-size: 12px;
+  padding-left: 43px;
+}
+
 .manual-bug-input {
   line-height: 8px;
   margin: 2px 0 0 4px;

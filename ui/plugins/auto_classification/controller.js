@@ -2,10 +2,10 @@
 
 treeherder.controller('ClassificationPluginCtrl', [
     '$scope', 'ThLog', 'ThFailureLinesModel', 'ThClassifiedFailuresModel',
-    '$q', 'thTabs', '$timeout', 'thNotify',
+    'ThMatcherModel', '$q', 'thTabs', '$timeout', 'thNotify',
     function ClassificationPluginCtrl(
         $scope, ThLog, ThFailureLinesModel, ThClassifiedFailuresModel,
-        $q, thTabs, $timeout, thNotify) {
+        ThMatcherModel, $q, thTabs, $timeout, thNotify) {
         var $log = new ThLog(this.constructor.name);
 
         $log.debug("error classification plugin initialized");
@@ -45,78 +45,111 @@ treeherder.controller('ClassificationPluginCtrl', [
         };
 
         var buildFailureLineOptions = function(failureLines) {
-            _.forEach(failureLines, function(line) {
-                line.ui = {};
+            ThMatcherModel.get_list().then(
+                function(matchers) {
+                    _.forEach(failureLines, function(line) {
+                        line.ui = {};
 
-                // used for the selection radio buttons
-                line.ui.options = [];
-                // the classified_failure specified as "best" (if any)
-                var best;
+                        // used for the selection radio buttons
+                        line.ui.options = [];
+                        // the classified_failure specified as "best" (if any)
+                        var best;
 
-                // collect all the classified_failures.  But skip
-                // ones with a null bug.  classified_failures with
-                // null bugs have no distinguishing features to make
-                // them relevant.
-                // If the "best" one has a null bug we will add
-                // that in later.
-                _.forEach(line.classified_failures, function(cf) {
-                    if (cf.bug_number !== null) {
-                        var bug_summary = cf.bug ? cf.bug.summary : "";
-                        line.ui.options.push({id: cf.id,
-                                              bug_number: cf.bug_number,
-                                              bug_summary: bug_summary,
-                                              type: "classified_failure"});
-                    }
-                });
+                        var matchersById = {};
+                        _.forEach(matchers,
+                                  function(matcher) {
+                                      matchersById[matcher.id] = matcher;
+                                  });
 
-                // set the best classified_failure
-                if (line.best_classification) {
-                    best = _.find(
-                        line.classified_failures,
-                        {id: line.best_classification});
+                        var matchesByClassifiedFailure = {};
+                        _.forEach(line.matches,
+                                  function(match) {
+                                      if (!matchesByClassifiedFailure[match.classified_failure]) {
+                                          matchesByClassifiedFailure[match.classified_failure] = []
+                                      }
+                                      matchesByClassifiedFailure[match.classified_failure].push(match);
+                                  });
 
-                    best.is_best = true;
-                    best.type = "classified_failure";
-                    best.bug_summary = best.bug ? best.bug.summary : "";
+                        // collect all the classified_failures.  But skip
+                        // ones with a null bug.  classified_failures with
+                        // null bugs have no distinguishing features to make
+                        // them relevant.
+                        // If the "best" one has a null bug we will add
+                        // that in later.
+                        var classifiedBugs = {};
+                        _.forEach(line.classified_failures, function(cf) {
+                            if (cf.bug_number !== null) {
+                                var bug_summary = cf.bug ? cf.bug.summary : "";
 
-                    // move the best one to the top
-                    line.ui.options = _.without(line.ui.options, best);
-                    line.ui.options = [best].concat(line.ui.options);
-                    line.ui.best = best;
-                }
+                                var matches = _.map(matchesByClassifiedFailure[cf.id],
+                                                    function(match) {
+                                                        return {
+                                                            matcher: matchersById[match.matcher],
+                                                            score: match.score
+                                                        }
+                                                    });
 
-                // add in unstructured_bugs as options as well
-                _.forEach(line.unstructured_bugs, function(bug) {
-                    // adding a prefix to the bug id because,
-                    // theoretically, however unlikely, it could
-                    // conflict with a classified_failure id.
-                    var ubid = "ub-" + bug.id;
-                    line.ui.options.push({id: ubid,
-                                          bug_number: bug.id,
-                                          bug_summary: bug.summary,
-                                          type: "unstructured_bug"});
+                                line.ui.options.push({id: cf.id,
+                                                      bug_number: cf.bug_number,
+                                                      bug_summary: bug_summary,
+                                                      type: "classified_failure",
+                                                      matches: matches
+                                                     });
+                            }
+                            classifiedBugs[cf.bug_number] = true;
+                        });
 
-                });
+                        // set the best classified_failure
+                        if (line.best_classification) {
+                            best = _.find(line.ui.options,
+                                          {id: line.best_classification});
 
-                if (!best || (best && best.bug_number)) {
-                    // add a "manual bug" option
-                    line.ui.options.push({
-                        id: "manual",
-                        type: "unstructured_bug",
-                        bug_number: null,
+                            best.is_best = true;
+
+                            // move the best one to the top
+                            line.ui.options = _.filter(line.ui.options,
+                                                       function(item) {
+                                                           item.id !== best.id
+                                                       });
+                            line.ui.options = [best].concat(line.ui.options);
+                            line.ui.best = best;
+                        }
+
+                        // add in unstructured_bugs as options as well
+                        _.forEach(line.unstructured_bugs, function(bug) {
+                            // adding a prefix to the bug id because,
+                            // theoretically, however unlikely, it could
+                            // conflict with a classified_failure id.
+                            if (!classifiedBugs.hasOwnProperty(bug.id)) {
+                                var ubid = "ub-" + bug.id;
+                                line.ui.options.push({id: ubid,
+                                                      bug_number: bug.id,
+                                                      bug_summary: bug.summary,
+                                                      type: "unstructured_bug",
+                                                      matches: null});
+                            }
+                        });
+
+                        if (!best || (best && best.bug_number)) {
+                            // add a "manual bug" option
+                            line.ui.options.push({
+                                id: "manual",
+                                type: "unstructured_bug",
+                                bug_number: null,
+                                matches: null
+                            });
+                        }
+
+                        _.forEach(line.ui.options, function(option) {
+                            option.icon_type = option.is_best ? "autoclassified" :
+                                (line.ui.best && !line.ui.best.bug_number && option.bug_number ?
+                                 'set_bug' : 'none');
+                        });
+
+                        // choose first in list as lineSelection
+                        line.ui.selectedOption = 0;
                     });
-                }
-
-                _.forEach(line.ui.options, function(option) {
-                    option.icon_type = option.is_best ? "autoclassified" :
-                        (line.ui.best && !line.ui.best.bug_number && option.bug_number ?
-                         'set_bug' : 'none');
-                });
-
-                // choose first in list as lineSelection
-                line.ui.selectedOption = 0;
-            });
-
+                })
         };
 
         $scope.setAutoclassifiedBugNumber = function(line, bug_number) {
