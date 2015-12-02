@@ -310,7 +310,7 @@ def test_get_matching_lines(webapp, test_repository, failure_lines, classified_f
     extra_lines[1].save()
 
     resp = webapp.get(
-        reverse("classified-failure-matching-lines", kwargs={"pk": classified_failures[0].id}))
+        reverse("classified-failure-matches", kwargs={"pk": classified_failures[0].id}))
 
     assert resp.status_int == 200
     actual = resp.json
