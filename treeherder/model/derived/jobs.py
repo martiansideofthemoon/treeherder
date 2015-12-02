@@ -486,7 +486,15 @@ class JobsModel(TreeherderModelBase):
             return
 
         if self.fully_autoclassified(job_id):
-            if user == "autoclassifier" and len(self.get_job_note_list(job_id)) != 0:
+            existing_notes = self.get_job_note_list(job_id)
+            autoclassification = FailureClassification.objects.get(
+                name="autoclassified intermittent")
+            # We don't want to add a job note after an autoclassification if there is already
+            # one and after a verification if there is already one not supplied by the
+            # autoclassifier
+            if (user == "autoclassifier" and existing_notes or
+                any(item["failure_classification_id"] != autoclassification.id
+                    for item in existing_notes)):
                 return
             self.insert_autoclassify_job_note(job_id, user=user)
 
@@ -500,12 +508,9 @@ class JobsModel(TreeherderModelBase):
         num_failure_lines = FailureLine.objects.filter(job_guid=job["job_guid"],
                                                        best_classification__isnull=False).count()
         if num_failure_lines == 0:
-            print "Not fully classified: no failure lines"
             return False
 
         bug_suggestion_lines = self.filter_bug_suggestions(self.bug_suggestions(job_id))
-        print "Got %i unstructured lines and %i structured lines" % (len(bug_suggestion_lines),
-                                                                     num_failure_lines)
 
         return num_failure_lines == len(bug_suggestion_lines)
 
