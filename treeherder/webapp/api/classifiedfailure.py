@@ -111,7 +111,7 @@ class ClassifiedFailureViewSet(viewsets.ModelViewSet):
         return Response(body, status)
 
     @detail_route(methods=['get'])
-    def matching_lines(self, request, pk=None):
+    def matches(self, request, pk=None):
         limit = request.GET.get("limit", 100)
         lines = FailureLine.objects.filter(
             best_classification__id=pk).prefetch_related('matches')[:limit]
