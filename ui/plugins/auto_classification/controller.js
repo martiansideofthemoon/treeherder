@@ -65,7 +65,7 @@ treeherder.controller('ClassificationPluginCtrl', [
                         _.forEach(line.matches,
                                   function(match) {
                                       if (!matchesByClassifiedFailure[match.classified_failure]) {
-                                          matchesByClassifiedFailure[match.classified_failure] = []
+                                          matchesByClassifiedFailure[match.classified_failure] = [];
                                       }
                                       matchesByClassifiedFailure[match.classified_failure].push(match);
                                   });
@@ -86,7 +86,7 @@ treeherder.controller('ClassificationPluginCtrl', [
                                                         return {
                                                             matcher: matchersById[match.matcher],
                                                             score: match.score
-                                                        }
+                                                        };
                                                     });
 
                                 line.ui.options.push({id: cf.id,
@@ -109,7 +109,7 @@ treeherder.controller('ClassificationPluginCtrl', [
                             // move the best one to the top
                             line.ui.options = _.filter(line.ui.options,
                                                        function(item) {
-                                                           item.id !== best.id
+                                                           return item.id !== best.id;
                                                        });
                             line.ui.options = [best].concat(line.ui.options);
                             line.ui.best = best;
@@ -149,7 +149,7 @@ treeherder.controller('ClassificationPluginCtrl', [
                         // choose first in list as lineSelection
                         line.ui.selectedOption = 0;
                     });
-                })
+                });
         };
 
         $scope.setAutoclassifiedBugNumber = function(line, bug_number) {
