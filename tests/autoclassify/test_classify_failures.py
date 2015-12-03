@@ -96,9 +96,9 @@ def test_autoclassify_update_job_classification(activate_responses, jm, test_rep
     notes = jm.get_job_note_list(job["id"])
     assert len(notes) == 1
 
+    # Check that a bug isn't added by the autoclassifier
     bugs = jm.get_bug_job_map_list(0, 100, conditions={"job_id": set([("=", job["id"])])})
-    assert len(bugs) == 1
-    assert bugs[0]["bug_id"] == 1234
+    assert len(bugs) == 0
 
 
 def test_autoclassify_no_update_job_classification(activate_responses, jm, test_repository,

@@ -12,7 +12,8 @@ from treeherder.etl.common import get_guid_root
 from treeherder.events.publisher import JobStatusPublisher
 from treeherder.model import (error_summary,
                               utils)
-from treeherder.model.models import (Datasource,
+from treeherder.model.models import (ClassifiedFailure,
+                                     Datasource,
                                      ExclusionProfile,
                                      FailureClassification,
                                      FailureLine,
@@ -526,20 +527,20 @@ class JobsModel(TreeherderModelBase):
 
         job = self.get_job(job_id)[0]
 
-        failure_lines = FailureLine.objects.filter(
-            job_guid=job["job_guid"], best_classification__isnull=False).select_related(
-                'best_classification')
+        # Only insert bugs for verified failures since these are automatically
+        # mirrored to ES and the mirroring can't be undone
+        classified_failures = ClassifiedFailure.objects.filter(
+            best_for_lines__job_guid=job["job_guid"],
+            best_for_lines__best_is_verified=True)
 
-        bugs = set()
-        for line in failure_lines:
-            for classified_failure in line.classified_failures.all():
-                bugs.add(classified_failure.bug_number)
+        bug_numbers = {item.bug_number for item in classified_failures if item.bug_number}
 
-        if len(bugs) == 1 and None not in bugs:
-            bug_number = bugs.pop()
-            logger.info("Autoclassifier adding bug")
-            self.insert_bug_job_map(job_id, bug_number, "autoclassification",
-                                    int(time.time()), "autoclassifier")
+        for bug_number in bug_numbers:
+            try:
+                self.insert_bug_job_map(job_id, bug_number, "autoclassification",
+                                        int(time.time()), user, autoclassify=True)
+            except JobDataIntegrityError:
+                pass
 
         if not verified:
             classification = FailureClassification.objects.get(
@@ -564,7 +565,8 @@ class JobsModel(TreeherderModelBase):
             lines = objs[0]["blob"] if objs else []
         return lines
 
-    def insert_bug_job_map(self, job_id, bug_id, assignment_type, submit_timestamp, who):
+    def insert_bug_job_map(self, job_id, bug_id, assignment_type, submit_timestamp, who,
+                           autoclassify=False):
         """
         Store a new relation between the given job and bug ids.
         """
@@ -600,7 +602,7 @@ class JobsModel(TreeherderModelBase):
                     routing_key='classification_mirroring'
                 )
 
-        if who != 'autoclassifier':
+        if not autoclassify:
             self.update_autoclassification_bug(job_id, bug_id)
 
     def delete_bug_job_map(self, job_id, bug_id):
