@@ -509,16 +509,10 @@ div.talos-panel {
 }
 
 .classification-options > *:first-child {
-  padding-left: 6px;
-  padding-right: 3px;
-}
-
-.best-classification-star {
-  align-self: center;
+  padding: 4px 3px 0 6px;
 }
 
 .classification-set-bug {
-  align-self: center;
   cursor: pointer;
 }
 
