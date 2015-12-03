@@ -20,9 +20,13 @@ failureViewerApp.controller('FailureViewerCtrl', [
 
             if ($scope.classifiedFailureId) {
 
+                $scope.isLoading = true;
                 ThClassifiedFailuresModel.get_matches($scope.classifiedFailureId).then(
                     function (data) {
                         $scope.cfList = data.data;
+                    })
+                    .finally(function() {
+                        $scope.isLoading = false;
                     });
             }
         };

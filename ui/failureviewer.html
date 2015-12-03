@@ -39,12 +39,14 @@
     </nav>
 
     <!-- Failure lines table -->
-    <div class="failure-line-list">
+    <div class="failure-line-list"
+         ng-if="!isLoading">
       <table class="table table-condensed" >
         <tr ng-repeat="line in cfList">
           <td>
             <div ng-if="line.test"><label>Test:</label> {{line.test}}</div>
             <div ng-if="line.subtest"><label>Subtest:</label> {{line.subtest}}</div>
+            <div ><label>Status:</label> Expected: <strong>{{line.expected}}</strong>  Actual: <strong>{{line.status}}</strong></div>
             <div ng-if="line.message"
                  ng-init="messageExpanded=false"
                  class="failure-line-message">
@@ -59,6 +61,12 @@
           </td>
         </tr>
       </table>
+    </div>
+
+    <div ng-if="isLoading">
+        <div class="failure-line-loading">Loading...
+            <span class="fa fa-spinner fa-pulse"></span>
+        </div>
     </div>
 
     <th-notification-box></th-notification-box>
