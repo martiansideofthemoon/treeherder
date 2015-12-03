@@ -601,6 +601,9 @@ class FailureLine(models.Model):
         unique_together = (
             ('job_guid', 'line')
         )
+        index_together = (
+            ('job_guid', 'repository')
+        )
 
     def best_automatic_match(self, min_score=0):
         return FailureMatch.objects.filter(
