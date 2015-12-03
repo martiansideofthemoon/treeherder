@@ -92,7 +92,8 @@
             <span ng-repeat='match in option.matches'>
               {{match.matcher.name}} ({{match.score}})
             </span>
-            <a target="th_similar" ng-href="/api/classified-failure/{{option.id}}/matches">Othermatching failures...</a>
+            <a target="th_similar" ng-href="/failureviewer.html#/?classified_failure_id={{option.id}}">Other matching failures...</a>
+            <a target="th_similar" ng-href="/api/classified-failure/{{option.id}}/matches">(raw)</a>
           </div>
         </li>
       </ul>

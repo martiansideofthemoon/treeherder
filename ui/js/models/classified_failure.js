@@ -30,6 +30,10 @@ treeherder.factory('ThClassifiedFailuresModel', [
             });
         };
 
+        ThClassifiedFailuresModel.get_matches = function(id) {
+            return $http.get(ThClassifiedFailuresModel.get_url() + id + "/matches/");
+        };
+
         ThClassifiedFailuresModel.create = function(bug_number) {
             return $http.post(ThClassifiedFailuresModel.get_url(),
                               {bug_number: bug_number}
