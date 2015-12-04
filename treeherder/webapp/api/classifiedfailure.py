@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import rest_framework_filters as filters
 from rest_framework import viewsets
 from rest_framework.decorators import detail_route
@@ -5,7 +7,8 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from treeherder.model.models import (ClassifiedFailure,
-                                     FailureLine)
+                                     FailureLine,
+                                     FailureMatch)
 from treeherder.webapp.api import serializers
 from treeherder.webapp.api.utils import as_dict
 
@@ -74,19 +77,45 @@ class ClassifiedFailureViewSet(viewsets.ModelViewSet):
             missing = set(bug_numbers.keys()) - set(classified_failures.keys())
             return "No classified failures with id: {0}".format(", ".join(missing)), 404
 
-        # The other option here would be to merge the classifications.
+        merges = {}
         existing = ClassifiedFailure.objects.filter(bug_number__in=bug_numbers.values()).all()
+        # Look for other classified failures with the same bug as one being updated, since
+        # we don't want duplicate bugs
         existing = [item for item in existing
                     if item.id not in bug_numbers or item.bug_number != bug_numbers[item.id]]
-        if existing:
-            return "Bug numbers %s already assigned to classified failures" % (
-                ", ".join(str(item.bug_number) for item in existing)), 400
 
+        if existing:
+            if any(item.id in bug_numbers for item in existing):
+                return "Cannot swap classified failure bug numbers in a single operation", 400
+
+            classified_failures.update(as_dict(existing, "id"))
+
+            bug_to_id = defaultdict(list)
+            for id, bug in bug_numbers.iteritems():
+                bug_to_id[bug].append(id)
+            # Merge the ClassifiedFailure being updated into the existing ClassifiedFailure
+            # with the same bug number
+            for item in existing:
+                new_id = item.id
+                for old_id in bug_to_id[item.bug_number]:
+                    FailureLine.objects.filter(best_classification__id=old_id).update(
+                        best_classification=new_id)
+                    FailureMatch.objects.filter(classified_failure__id=old_id).update(
+                        classified_failure=new_id)
+                    ClassifiedFailure.objects.filter(id=old_id).delete()
+                    merges[old_id] = new_id
+
+        # Ensure that the return value is ordered in the same way as the request
         rv = []
-        for classification_id, bug_number in bug_numbers.iteritems():
-            obj = classified_failures[classification_id]
-            obj.bug_number = bug_number
-            obj.save()
+        for item in data:
+            classification_id = int(item.get("id"))
+            bug_number = bug_numbers[classification_id]
+            if classification_id in merges:
+                obj = classified_failures[merges[classification_id]]
+            else:
+                obj = classified_failures[classification_id]
+                obj.bug_number = bug_number
+                obj.save()
             rv.append(obj)
 
         if not many:
