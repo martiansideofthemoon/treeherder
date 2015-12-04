@@ -226,7 +226,7 @@ treeherder.controller('ClassificationPluginCtrl', [
             var byType = _.partition(
                 failureLines,
                 function(line) {
-                    return line.ui.options[line.ui.selectedOption].type == "classified_failure";
+                    return line.ui.options[line.ui.selectedOption].type === "classified_failure";
                 });
 
             var autoclassified = byType[0];
@@ -292,7 +292,15 @@ treeherder.controller('ClassificationPluginCtrl', [
                 })
                 .then(function() {return ThFailureLinesModel.verifyMany(bestClassifications);})
                 .then(function() {thNotify.send("Classifications saved", "success");})
-                .catch(function(err) {thNotify.send("Error saving classifications:\n " + err + err.stack, "danger");})
+                .catch(function(err) {
+                    var msg = "Error saving classifications:\n ";
+                    if (err.stack) {
+                        msg += err + err.stack;
+                    } else {
+                        msg += err.statusText + " - " + err.data.detail;
+                    }
+                    thNotify.send(msg, "danger");
+                })
                 .then(function() {thTabs.tabs.autoClassification.update();});
         };
 
