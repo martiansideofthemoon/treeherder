@@ -50,7 +50,9 @@
             <span class="glyphicon glyphicon-star best-classification-star"></span>
             <span class="line-option-text" ng-if="line.ui.best.bug_number">
               <a href="{{::getBugUrl(line.ui.best.bug_number) }}"
-                 target="_blank">Bug {{::line.ui.best.bug_number}} - <span ng-bind-html="line.ui.best.bug_summary | escapeHTML"></span>
+                 target="_blank">Bug {{::line.ui.best.bug_number}} -
+                  <span ng-if="line.ui.best.bug_summary"
+                        ng-bind-html="line.ui.best.bug_summary |  escapeHTML | highlightCommonTerms:line.test"></span>
               </a>
             </span>
       </div>
@@ -76,7 +78,9 @@
                    ng-model="line.ui.selectedOption" />
             <span class="line-option-text" ng-if="option.bug_number">
               <a href="{{::getBugUrl(option.bug_number) }}"
-                 target="_blank">Bug {{::option.bug_number}} - <span ng-bind-html="option.bug_summary | escapeHTML"></span>
+                 target="_blank">Bug {{::option.bug_number}} -
+                  <span ng-if="option.bug_summary"
+                        ng-bind-html="option.bug_summary | escapeHTML | highlightCommonTerms:line.test"></span>
               </a>
             </span>
             <span ng-if="!option.bug_number">
