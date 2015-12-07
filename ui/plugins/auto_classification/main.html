@@ -80,7 +80,7 @@
               <a href="{{::getBugUrl(option.bug_number) }}"
                  target="_blank">Bug {{::option.bug_number}} -
                   <span ng-if="option.bug_summary"
-                        ng-bind-html="option.bug_summary | escapeHTML | highlightCommonTerms:line.test"></span>
+                        ng-bind-html="option.bug_summary | escapeHTML | highlightCommonTerms:line.test:line.subtest:line.status:line.expected"></span>
               </a>
             </span>
             <span ng-if="!option.bug_number">
