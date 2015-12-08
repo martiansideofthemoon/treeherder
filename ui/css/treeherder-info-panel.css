@@ -463,21 +463,31 @@ div.talos-panel {
  * Error Classification
  */
 
-#job-tabs-panel ul.failure-line-list {
+.error-classification-content {
+ font-size:11px;
+}
+
+ul.failure-line-list {
   width: 100%;
   margin-bottom: 0;
 }
 
 .failure-line {
   padding: 2px 4px 0;
+  display: flex;
+  margin-bottom: 8px;
 }
 
-.classified-line {
-  background: #ccfaff;
+.failure-line-detail {
+  padding-left: 6px;
 }
 
 .failure-line-message {
   display: flex;
+}
+
+.failure-line-status {
+  color: #c45a02;
 }
 
 .failure-line-message-toggle {
@@ -492,38 +502,41 @@ div.talos-panel {
   height: 14px;
   overflow: hidden;
   padding-left: 5px;
-  color: darkgray;
+  font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
 }
 
 .failure-line-message-expanded {
   margin-left: 5px;
   margin-bottom: 10px;
-  color: #747474;
   overflow-x: auto;
   white-space: pre-wrap;
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
 }
 
-.classification-options{
+.classification-options {
   display: inline-flex;
-}
-
-.classification-options > *:first-child {
-  padding: 4px 3px 0 6px;
 }
 
 .classification-set-bug {
   cursor: pointer;
+  font-size: 8px;
 }
 
-.classification-no-icon {
-  width: 21px;
+.classification-icon {
+  width: 24px;
+  margin-top: auto;
+  margin-bottom: auto;
+  text-align: center;
+}
+
+.classification-icon > * {
+ margin-left: auto;
+ margin-right: auto;
 }
 
 /* TODO: Make this better */
 .classification-matchers {
-  color: grey;
-  font-size: 12px;
+  color: darkgrey;
   padding-left: 43px;
 }
 
@@ -537,4 +550,15 @@ div.talos-panel {
 
 .line-option-text {
   padding: 4px 0 0 4px;
+  position: relative;
+  top: 0;
+}
+
+.failure-lines-save-all {
+  width: 80px;
+  padding: 4px 4px 4px 4px;
+}
+
+.failure-lines-save-all > button {
+  position: absolute;
 }

@@ -130,8 +130,12 @@ treeherder.filter('getRevisionUrl', ['thServiceDomain', function(thServiceDomain
     };
 }]);
 
-treeherder.filter('classified', function() {
-    return function(line){
-        return line.best_classification !== null ? "CLASSIFIED" : "UNCLASSIFIED";
+treeherder.filter('expectedString', function() {
+    return function(line) {
+        var rv = "<strong class=\"failure-line-status\">" + line.status + "</strong>";
+        if (line.expected != "PASS" && line.expected != "OK") {
+            rv += " (expected <strong>" + line.expected + "</strong>)";
+        }
+        return rv;
     };
 });
