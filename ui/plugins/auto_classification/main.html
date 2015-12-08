@@ -50,7 +50,7 @@
             <a href="{{::getBugUrl(line.ui.best.bug_number) }}"
                target="_blank">Bug {{::line.ui.best.bug_number}} -
               <span ng-if="line.ui.best.bug_summary"
-                    ng-bind-html="line.ui.best.bug_summary |  escapeHTML | highlightCommonTerms:line.test"></span>
+                    ng-bind-html="line.ui.best.bug_summary |  escapeHTML | highlightCommonTerms:line.test:line.subtest:line.status:line.expected"></span>
             </a>
           </span>
         </div>
