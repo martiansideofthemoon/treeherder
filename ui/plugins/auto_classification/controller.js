@@ -1,11 +1,11 @@
 "use strict";
 
 treeherder.controller('ClassificationPluginCtrl', [
-    '$scope', 'ThLog', 'ThFailureLinesModel', 'ThClassifiedFailuresModel',
-    'ThMatcherModel', '$q', 'thTabs', '$timeout', 'thNotify',
+    '$scope', '$rootScope', 'ThLog', 'ThFailureLinesModel', 'ThClassifiedFailuresModel',
+    'ThMatcherModel', '$q', 'thEvents', 'thTabs', '$timeout', 'thNotify',
     function ClassificationPluginCtrl(
-        $scope, ThLog, ThFailureLinesModel, ThClassifiedFailuresModel,
-        ThMatcherModel, $q, thTabs, $timeout, thNotify) {
+        $scope, $rootScope, ThLog, ThFailureLinesModel, ThClassifiedFailuresModel,
+        ThMatcherModel, $q, thEvents, thTabs, $timeout, thNotify) {
         var $log = new ThLog(this.constructor.name);
 
         $log.debug("error classification plugin initialized");
@@ -184,7 +184,7 @@ treeherder.controller('ClassificationPluginCtrl', [
                     $scope.manualBugs[line.id]);
         };
 
-        $scope.canSaveAll = function(line) {
+        $scope.canSaveAll = function() {
             return (_.any($scope.failureLines, function(line) {return !line.best_is_verified;}) &&
                     _.every($scope.failureLines, function(line) {return $scope.canSave(line);}));
         };
@@ -345,5 +345,10 @@ treeherder.controller('ClassificationPluginCtrl', [
                       });
         };
 
+        $rootScope.$on(thEvents.saveAllAutoclassifications, function(event) {
+            if ($scope.canSaveAll()) {
+                $scope.saveAll();
+            }
+        });
     }
 ]);
